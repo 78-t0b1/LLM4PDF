@@ -77,7 +77,8 @@ def getVectorStore(chunks):
     
 def getConversation(vectorstore):
     llm = HuggingFaceHub(repo_id="google/flan-t5-xxl", model_kwargs={"temperature":0.5, "max_length":512}) 
-    memory = ConversationBufferMemory(memory_key='history', return_messages=True)   # Study this
+    memory = ConversationBufferMemory(memory_key='chat_history',
+                                       return_messages=True)   # Study this
     convo_chain =  ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=vectorstore.as_retriever(),
@@ -101,14 +102,13 @@ def main():
     load_dotenv()
     st.set_page_config('Chat with PDFs',':book:')
     st.write(css,unsafe_allow_html=True)
-    st.header('Chat with PDFs')
-    
-    if 'convo' not in st.session_state:
-        st.session_state.convo = None
 
+    if "convo" not in st.session_state:
+        st.session_state.convo = None
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = None
 
+    st.header('Chat with PDFs')
     user_que = st.text_input("Ask question about docs:")
     if user_que:
         handleQue(user_que)
@@ -126,10 +126,14 @@ def main():
                 # st.write(chunks)
                 #Create vector db with embedings.
                 vectorstore = getVectorStore(chunks)
-                st.write(vectorstore)
+                # st.write(vectorstore)
 
                 # Create coversation chain
                 st.session_state.convo = getConversation(vectorstore)
+                # st.write(st.session_state.convo)
+                st.write(bot_template.replace(
+                "{{MSG}}", "I am ready. Please ask questions."), unsafe_allow_html=True)
+
 
 
 if __name__ == "__main__":
